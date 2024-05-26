@@ -27,12 +27,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="res\10.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="res\9.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
 </Project>

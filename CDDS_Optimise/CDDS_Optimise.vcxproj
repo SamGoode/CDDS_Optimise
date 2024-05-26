@@ -138,10 +138,6 @@
   <ItemGroup>
     <ClInclude Include="Critter.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="res\10.png" />
-    <Image Include="res\9.png" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
