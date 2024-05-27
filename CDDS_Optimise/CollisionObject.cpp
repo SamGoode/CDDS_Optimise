@@ -52,6 +52,6 @@ void CollisionObject::Update(float dt) {
 
 void CollisionObject::Draw() {
 	DrawTexture((*textureMapPtr)[m_textureID], m_position.x - m_radius, m_position.y - m_radius, WHITE);
-	//DrawCircle(m_position.x, m_position.y, 5, BLUE);
-	//DrawCircleLines(m_position.x, m_position.y, m_radius, BLACK);
+	DrawCircle(m_position.x, m_position.y, 5, BLUE);
+	DrawCircleLines(m_position.x, m_position.y, m_radius, BLACK);
 }

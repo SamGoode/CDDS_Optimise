@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Critter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -25,9 +22,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CollisionObject.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Destroyer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -17,6 +17,20 @@ public:
         objects = Array<T>(initCount);
     }
 
+    ObjectPool(const ObjectPool& copy) {
+        totalCount = copy.totalCount;
+        activeCount = copy.activeCount;
+        objects = copy.objects;
+    }
+
+    ObjectPool& operator=(const ObjectPool& copy) {
+        totalCount = copy.totalCount;
+        activeCount = copy.activeCount;
+        objects = copy.objects;
+
+        return *this;
+    }
+
     T& operator[](int index) {
         return objects[index];
     }

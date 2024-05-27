@@ -133,8 +133,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CollisionObject.cpp" />
-    <ClCompile Include="Critter.cpp" />
-    <ClCompile Include="Destroyer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="TextureMap.cpp" />
   </ItemGroup>
