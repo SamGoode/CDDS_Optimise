@@ -1,24 +1,27 @@
 #pragma once
 #include "raylib.h"
+#include "TextureMap.h"
 
-class Critter
-{
+class Critter {
 protected:	
 	Vector2 m_position;
 	Vector2 m_velocity;
 	float m_radius;
 
-	Texture2D m_texture;
+	TextureMap* textureMapPtr;
+	int m_textureID;
 
-	bool m_isLoaded;
 	bool m_isDirty;		// indicates if we've already processed a collision response for this critter
 	
 public:
 	Critter();
-	~Critter();
 
-	void Init(Vector2 position, Vector2 velocity, float radius, const char* texture);
-	void Destroy();
+	Critter(const Critter& copy);
+
+	Critter& operator=(const Critter& copy);
+
+	void Init(Vector2 position, Vector2 velocity, float radius, TextureMap* ptr, int m_textureID);
+	void InitVecs(Vector2 position, Vector2 velocity);
 	void Update(float dt);
 	void Draw();
 
@@ -37,7 +40,5 @@ public:
 
 	bool IsDirty() { return m_isDirty; }
 	void SetDirty() { m_isDirty = true; }
-
-	bool IsDead() { return m_isLoaded == false; }
 };
 
