@@ -44,5 +44,8 @@
     <ClInclude Include="Destroyer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="int2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

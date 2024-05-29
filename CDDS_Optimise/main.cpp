@@ -29,46 +29,40 @@
 #include "Array.h"
 #include "Critter.h"
 #include "Destroyer.h"
+#include "int2.h"
 
-struct Int2 {
-    int x;
-    int y;
-};
-
-bool compareCellHash(Int2 a, Int2 b) {
+bool compareCellHash(int2 a, int2 b) {
     return a.y < b.y;
 }
 
 class SpatialHashGrid {
 private:
     Vector2 m_pos;
-    int m_width;
-    int m_height;
+    Vector2 m_size;
     int gridWidth;
     int gridHeight;
-    int cellWidth;
-    int cellHeight;
+    float cellWidth;
+    float cellHeight;
     // (particle index, cell index)
     Array<Vector2> positionList;
-    Array<Int2> hashList;
+    Array<int2> hashList;
     Array<int> lookup;
 
 public:
     SpatialHashGrid() {}
 
-    SpatialHashGrid(Vector2 _pos, int _width, int _height, int _gridWidth, int _gridHeight) {
+    SpatialHashGrid(Vector2 _pos, Vector2 _size, int _gridWidth, int _gridHeight) {
         m_pos = _pos;
-        m_width = _width;
-        m_height = _height;
+        m_size = _size;
         gridWidth = _gridWidth;
         gridHeight = _gridHeight;
-        cellWidth = m_width / gridWidth;
-        cellHeight = m_height / gridHeight;
+        cellWidth = (float)(m_size.x / gridWidth);
+        cellHeight = (float)(m_size.y / gridHeight);
     }
 
     void insertPositions(Array<Vector2> positions) {
         positionList = positions;
-        hashList = Array<Int2>(positions.getCount());
+        hashList = Array<int2>(positions.getCount());
 
         for (int i = 0; i < hashList.getCount(); i++) {
             hashList[i] = { i, getCellHash(getCellPos(positions[i])) };
@@ -76,6 +70,10 @@ public:
     }
 
     void sortByCellHash() {
+        if (hashList.getCount() == 0) {
+            return;
+        }
+
         std::sort(&hashList[0], &hashList[hashList.getCount() - 1], compareCellHash);
     }
 
@@ -101,12 +99,12 @@ public:
         }
     }
 
-    Array<int> findNearby(Int2 cellPos) {
+    Array<int> findNearby(int2 cellPos) {
         Array<int> positionIndexes;
 
         for (int i = 0; i < 3; i++) {
             for (int n = 0; n < 3; n++) {
-                Int2 queryPos = { cellPos.x + i - 1, cellPos.y + n - 1 };
+                int2 queryPos = { cellPos.x + i - 1, cellPos.y + n - 1 };
                 if (queryPos.x < 0 || queryPos.x >= gridWidth || queryPos.y < 0 || queryPos.y >= gridHeight) {
                     continue;
                 }
@@ -124,23 +122,40 @@ public:
     }
 
     bool isValidPos(Vector2 pos) {
-        return (pos.x >= m_pos.x && pos.x < m_pos.x + m_width && pos.y >= m_pos.y && pos.y < m_pos.y + m_height);
+        return (pos.x >= m_pos.x && pos.x < m_pos.x + m_size.x && pos.y >= m_pos.y && pos.y < m_pos.y + m_size.y);
     }
 
-    Int2 getCellPos(Vector2 pos) {
+    int2 getCellPos(Vector2 pos) {
         Vector2 adjusted = Vector2Subtract(pos, m_pos);
-        return { (int)adjusted.x / cellWidth, (int)adjusted.y / cellHeight };
+        int2 cellPos = { (int)(adjusted.x / cellWidth), (int)(adjusted.y / cellHeight) };
+        if (cellPos.x < 0) {
+            cellPos.x = 0;
+        }
+        else if (cellPos.x >= gridWidth) {
+            cellPos.x = gridWidth - 1;
+        }
+
+        if (cellPos.y < 0) {
+            cellPos.y = 0;
+        }
+        else if (cellPos.y >= gridWidth) {
+            cellPos.y = gridWidth - 1;
+        }
+
+        return cellPos;
     }
 
-    int getCellHash(Int2 cellPos) {
+    int getCellHash(int2 cellPos) {
         return (cellPos.x + cellPos.y * gridWidth);
     }
 
     void draw() {
-        //Vector2 pos = GetMousePosition();
-        Vector2 pos = positionList[0];
+        sortByCellHash();
+        generateLookup();
+        Vector2 pos = GetMousePosition();
+        //Vector2 pos = positionList[0];
 
-        Int2 cellPos = getCellPos(pos);
+        int2 cellPos = getCellPos(pos);
         if (!isValidPos(pos)) {
             cellPos = { 1, 1 };
         }
@@ -155,6 +170,8 @@ public:
             }
         }
 
+        DrawRectangleLines(m_pos.x, m_pos.y, m_size.x, m_size.y, BLUE);
+
         Array<int> indexes = findNearby(cellPos);
 
         for (int i = 0; i < positionList.getCount(); i++) {
@@ -168,13 +185,13 @@ public:
         DrawCircle(pos.x, pos.y, 15, BLUE);
 
         std::string cellID = "Cell ID: " + std::to_string(getCellHash(cellPos));
-        DrawText(cellID.c_str(), 10, 100, 20, RED);
-        DrawText(std::to_string(indexes.getCount()).c_str(), 10, 140, 20, RED);
+        DrawText(cellID.c_str(), 10, 100, 20, PURPLE);
+        std::string nearby = "Within bounds: " + std::to_string(indexes.getCount());
+        DrawText(nearby.c_str(), 10, 140, 20, PURPLE);
 
         std::string valid = isValidPos(GetMousePosition()) ? "true" : "false";
-        DrawText(valid.c_str(), 10, 160, 20, RED);
-
-
+        valid = "Valid location: " + valid;
+        DrawText(valid.c_str(), 10, 160, 20, PURPLE);
     }
 };
 
@@ -197,14 +214,15 @@ int main(int argc, char* argv[])
 
     srand(time(NULL));
 
-    SpatialHashGrid grid({ 0, 0 }, screenWidth, screenHeight+20, 16, 8);
+    SpatialHashGrid grid({ 0, 0 }, { (float)screenWidth, (float)screenHeight }, 16, 8);
 
     // create some critters 
-    ObjectPool<Critter> critterPool(50);
+    Array<Critter> critters(50);
+    ObjectPool critterPool(critters.getCount());
 
     const int MAX_VELOCITY = 80;
 
-    for (int i = 0; i < critterPool.getTotal(); i++) {
+    for (int i = 0; i < critters.getCount(); i++) {
         // create a random position vector for the location
         Vector2 position = { (float)(5 + rand() % (screenWidth - 10)), (float)(5 + (rand() % screenHeight - 10)) };
 
@@ -214,7 +232,7 @@ int main(int argc, char* argv[])
         velocity = Vector2Scale(Vector2Normalize(velocity), MAX_VELOCITY);
 
         // create a critter in a random location
-        critterPool[i] = Critter(position, velocity, &textureMap);
+        critters[i] = Critter(position, velocity, &textureMap);
     }
     
     // create a position vector for the centre of the screen
@@ -263,70 +281,71 @@ int main(int argc, char* argv[])
         // update the critters
         // (dirty flags will be cleared during update)
         for (int i = 0; i < critterPool.getActive(); i++) {
-            critterPool[i].Update(delta);
+            //int n = critterPool[i];
+            Critter& critter = critters[critterPool[i]];
+            critter.Update(delta);
 
             // check each critter against screen bounds
-            if (critterPool[i].GetX() < 0) {
-                critterPool[i].SetX(0);
-                critterPool[i].SetVelocity(Vector2{ -critterPool[i].GetVelocity().x, critterPool[i].GetVelocity().y });
+            if (critter.GetX() < 0) {
+                critter.SetX(0);
+                critter.SetVelocity(Vector2{ -critter.GetVelocity().x, critter.GetVelocity().y });
             }
-            if (critterPool[i].GetX() > screenWidth) {
-                critterPool[i].SetX(screenWidth);
-                critterPool[i].SetVelocity(Vector2{ -critterPool[i].GetVelocity().x, critterPool[i].GetVelocity().y });
+            if (critter.GetX() > screenWidth) {
+                critter.SetX(screenWidth);
+                critter.SetVelocity(Vector2{ -critter.GetVelocity().x, critter.GetVelocity().y });
             }
-            if (critterPool[i].GetY() < 0) {
-                critterPool[i].SetY(0);
-                critterPool[i].SetVelocity(Vector2{ critterPool[i].GetVelocity().x, -critterPool[i].GetVelocity().y });
+            if (critter.GetY() < 0) {
+                critter.SetY(0);
+                critter.SetVelocity(Vector2{ critter.GetVelocity().x, -critter.GetVelocity().y });
             }
-            if (critterPool[i].GetY() > screenHeight) {
-                critterPool[i].SetY(screenHeight);
-                critterPool[i].SetVelocity(Vector2{ critterPool[i].GetVelocity().x, -critterPool[i].GetVelocity().y });
+            if (critter.GetY() > screenHeight) {
+                critter.SetY(screenHeight);
+                critter.SetVelocity(Vector2{ critter.GetVelocity().x, -critter.GetVelocity().y });
             }
 
             // kill any critter touching the destroyer
             // simple circle-to-circle collision check
-            float dist = Vector2Distance(critterPool[i].GetPosition(), destroyer.GetPosition());
-            if (dist < critterPool[i].GetRadius() + destroyer.GetRadius()) {
+            float dist = Vector2Distance(critter.GetPosition(), destroyer.GetPosition());
+            if (dist < critter.GetRadius() + destroyer.GetRadius()) {
                 critterPool.unloadObject(i);
             }
         }
 
         Array<Vector2> boop;
-
         for (int i = 0; i < critterPool.getActive(); i++) {
-            if (grid.isValidPos(critterPool[i].GetPosition())) {
-                boop.append(critterPool[i].GetPosition());
+            Vector2 position = critters[critterPool[i]].GetPosition();
+            if (grid.isValidPos(position)) {
+                boop.append(position);
             }
         }
-
         grid.insertPositions(boop);
-        grid.sortByCellHash();
-        grid.generateLookup();
                 
         // check for critter-on-critter collisions
         for (int i = 0; i < critterPool.getActive(); i++) {
             for (int j = 0; j < critterPool.getActive(); j++){
-                if (i == j || critterPool[i].IsDirty()) {
+                Critter& critterA = critters[critterPool[i]];
+                Critter& critterB = critters[critterPool[j]];
+                if (i == j || critterA.IsDirty()) {
                     continue;// note: the other critter (j) could be dirty - that's OK
                 }
 
                 // check every critter against every other critter
-                float dist = Vector2Distance(critterPool[i].GetPosition(), critterPool[j].GetPosition());
-                if (dist < critterPool[i].GetRadius() + critterPool[j].GetRadius()) {
+                float dist = Vector2Distance(critterA.GetPosition(), critterB.GetPosition());
+                if (dist < critterA.GetRadius() + critterB.GetRadius()) {
                     // collision!
                     // do math to get critters bouncing
-                    Vector2 normal = Vector2Normalize( Vector2Subtract(critterPool[j].GetPosition(), critterPool[i].GetPosition()));
+                    Vector2 normal = Vector2Normalize( Vector2Subtract(critterB.GetPosition(), critterA.GetPosition()));
 
                     // not even close to real physics, but fine for our needs
-                    critterPool[i].SetVelocity(Vector2Scale(normal, -MAX_VELOCITY));
+                    critterA.SetVelocity(Vector2Scale(normal, -MAX_VELOCITY));
                     // set the critter to *dirty* so we know not to process any more collisions on it
-                    critterPool[i].SetDirty();
+                    critterA.SetDirty();
 
                     // we still want to check for collisions in the case where 1 critter is dirty - so we need a check 
                     // to make sure the other critter is clean before we do the collision response
-                    if (!critterPool[j].IsDirty()) {
-                        critterPool[j].SetVelocity(Vector2Scale(normal, MAX_VELOCITY));
-                        critterPool[j].SetDirty();
+                    if (!critterB.IsDirty()) {
+                        critterB.SetVelocity(Vector2Scale(normal, MAX_VELOCITY));
+                        critterB.SetDirty();
                     }
                     break;
                 }
@@ -343,7 +362,7 @@ int main(int argc, char* argv[])
                 Vector2 pos = destroyer.GetPosition();
                 pos = Vector2Add(pos, Vector2Scale(normal, -70));
 
-                critterPool.loadObject().InitVecs(pos, Vector2Scale(normal, -MAX_VELOCITY));
+                critters[critterPool.loadObject()].InitVecs(pos, Vector2Scale(normal, -MAX_VELOCITY));
             }
         }
 
@@ -360,7 +379,7 @@ int main(int argc, char* argv[])
 
         // draw the critters
         for (int i = 0; i < critterPool.getActive(); i++) {
-            critterPool[i].Draw();
+            critters[critterPool[i]].Draw();
         }
 
         

@@ -141,6 +141,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Critter.h" />
     <ClInclude Include="Destroyer.h" />
+    <ClInclude Include="int2.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="TextureMap.h" />
   </ItemGroup>

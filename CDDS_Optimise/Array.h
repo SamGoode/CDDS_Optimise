@@ -16,7 +16,7 @@ public:
 
     Array(unsigned int initCount) {
         count = initCount;
-
+        
         capacity = 1;
         for (unsigned int i = 0; i < 32; i++) {
             if ((capacity << i) >= initCount) {
@@ -24,6 +24,10 @@ public:
                 break;
             }
         }
+        if (count == 0) {
+            capacity = 0;
+        }
+
         ptr = new T[capacity];
     }
 

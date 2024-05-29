@@ -1,12 +1,13 @@
 #pragma once
 #include "Array.h"
 
-template <typename T>
+// modified ObjectPool so it no longer stores the actual Objects
 class ObjectPool {
 private:
     int totalCount;
     int activeCount;
-    Array<T> objects;
+    // the array stores the index of each object within the original array
+    Array<int> objects;
 
 public:
     ObjectPool() {}
@@ -14,7 +15,11 @@ public:
     ObjectPool(int initCount) {
         totalCount = initCount;
         activeCount = initCount;
-        objects = Array<T>(initCount);
+        objects = Array<int>(initCount);
+
+        for (int i = 0; i < objects.getCount(); i++) {
+            objects[i] = i;
+        }
     }
 
     ObjectPool(const ObjectPool& copy) {
@@ -31,11 +36,9 @@ public:
         return *this;
     }
 
-    T& operator[](int index) {
+    int operator[](int index) {
         return objects[index];
     }
-
-    
 
     int getTotal() {
         return totalCount;
@@ -49,12 +52,12 @@ public:
         return totalCount - activeCount;
     }
 
-    T& loadObject() {
-        activeCount++;
-        if (activeCount > totalCount) {
-            totalCount++;
-            objects.append(T());
+    int loadObject() {
+        if (activeCount + 1 > totalCount) {
+            throw "no more objects to load";
         }
+
+        activeCount++;
 
         return objects[activeCount - 1];
     }
@@ -64,7 +67,9 @@ public:
             throw "object is not active";
         }
 
+        int temp = objects[index];
         objects[index] = objects[activeCount - 1];
+        objects[activeCount - 1] = temp;
         activeCount--;
     }
 };
