@@ -35,6 +35,8 @@ public:
         return objects[index];
     }
 
+    
+
     int getTotal() {
         return totalCount;
     }

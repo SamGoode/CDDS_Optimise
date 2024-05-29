@@ -1,7 +1,7 @@
 #pragma once
-#include "CollisionObject.h"
+#include "GameObject.h"
 
-class Destroyer : public CollisionObject {
+class Destroyer : public GameObject {
 protected:
 	float radius;
 	int textureID;

@@ -30,63 +30,151 @@
 #include "Critter.h"
 #include "Destroyer.h"
 
-Array<Vector2> positions(10);
+struct Int2 {
+    int x;
+    int y;
+};
+
+bool compareCellHash(Int2 a, Int2 b) {
+    return a.y < b.y;
+}
 
 class SpatialHashGrid {
 private:
-    Vector2 pos;
-    int width;
-    int height;
+    Vector2 m_pos;
+    int m_width;
+    int m_height;
     int gridWidth;
     int gridHeight;
     int cellWidth;
     int cellHeight;
-    struct GridPos { int x, y; };
+    // (particle index, cell index)
+    Array<Vector2> positionList;
+    Array<Int2> hashList;
+    Array<int> lookup;
 
 public:
     SpatialHashGrid() {}
 
     SpatialHashGrid(Vector2 _pos, int _width, int _height, int _gridWidth, int _gridHeight) {
-        pos = _pos;
-        width = _width;
-        height = _height;
+        m_pos = _pos;
+        m_width = _width;
+        m_height = _height;
         gridWidth = _gridWidth;
         gridHeight = _gridHeight;
-        cellWidth = width / gridWidth;
-        cellHeight = height / gridHeight;
-    }
-
-    GridPos calculateGridPos(Vector2 query) {
-        Vector2 adjusted = Vector2Subtract(query, pos);
-        return { (int)adjusted.x / cellWidth, (int)adjusted.y / cellHeight };
-    }
-
-    int generateHashKey(GridPos gridPos) {
-        return (gridPos.x * 13 + gridPos.y * 7) % (gridWidth * gridHeight);
+        cellWidth = m_width / gridWidth;
+        cellHeight = m_height / gridHeight;
     }
 
     void insertPositions(Array<Vector2> positions) {
-        Array<int> hashList(positions.getCount());
+        positionList = positions;
+        hashList = Array<Int2>(positions.getCount());
 
-        for (int i = 0; i < positions.getCount(); i++) {
-            hashList[i] = generateHashKey(calculateGridPos(positions[i]));
+        for (int i = 0; i < hashList.getCount(); i++) {
+            hashList[i] = { i, getCellHash(getCellPos(positions[i])) };
         }
     }
 
-    void draw() {
-        GridPos gridPos = calculateGridPos(GetMousePosition());
-        int x = gridPos.x;
-        int y = gridPos.y;
-        DrawRectangle(pos.x + (x - 1) * cellWidth, pos.y + (y - 1) * cellHeight, cellWidth * 3, cellHeight * 3, RED);
-        DrawRectangle(pos.x + x * cellWidth, pos.y + y * cellHeight, cellWidth, cellHeight, BLUE);
+    void sortByCellHash() {
+        std::sort(&hashList[0], &hashList[hashList.getCount() - 1], compareCellHash);
+    }
 
-        for (int i = 0; i < gridWidth; i++) {
-            for (int n = 0; n < gridHeight; n++) {
-                DrawRectangleLines(pos.x + i * cellWidth, pos.y + n * cellHeight, cellWidth, cellHeight, BLACK);
+    void generateLookup() {
+        lookup = Array<int>(gridWidth * gridHeight);
+        for (int i = 0; i < lookup.getCount(); i++) {
+            lookup[i] = -1;
+        }
+        
+        int currentStart = 0;
+        for (unsigned int i = 0; i < (unsigned int)hashList.getCount(); i++) {
+            if (i == hashList.getCount() - 1) {
+                lookup[hashList[i].y] = currentStart;
+                break;
+            }
+
+            if (hashList[i].y == hashList[i + 1].y) {
+                continue;
+            }
+
+            lookup[hashList[i].y] = currentStart;
+            currentStart = i + 1;
+        }
+    }
+
+    Array<int> findNearby(Int2 cellPos) {
+        Array<int> positionIndexes;
+
+        for (int i = 0; i < 3; i++) {
+            for (int n = 0; n < 3; n++) {
+                Int2 queryPos = { cellPos.x + i - 1, cellPos.y + n - 1 };
+                if (queryPos.x < 0 || queryPos.x >= gridWidth || queryPos.y < 0 || queryPos.y >= gridHeight) {
+                    continue;
+                }
+
+                int cellHash = getCellHash(queryPos);
+                int startIndex = lookup[cellHash];
+
+                for (int i = startIndex; i < hashList.getCount() && hashList[i].y == cellHash; i++) {
+                    positionIndexes.append(hashList[startIndex].x);
+                }
             }
         }
 
-        DrawText(std::to_string(generateHashKey(gridPos)).c_str(), 10, 100, 20, RED);
+        return positionIndexes;
+    }
+
+    bool isValidPos(Vector2 pos) {
+        return (pos.x >= m_pos.x && pos.x < m_pos.x + m_width && pos.y >= m_pos.y && pos.y < m_pos.y + m_height);
+    }
+
+    Int2 getCellPos(Vector2 pos) {
+        Vector2 adjusted = Vector2Subtract(pos, m_pos);
+        return { (int)adjusted.x / cellWidth, (int)adjusted.y / cellHeight };
+    }
+
+    int getCellHash(Int2 cellPos) {
+        return (cellPos.x + cellPos.y * gridWidth);
+    }
+
+    void draw() {
+        //Vector2 pos = GetMousePosition();
+        Vector2 pos = positionList[0];
+
+        Int2 cellPos = getCellPos(pos);
+        if (!isValidPos(pos)) {
+            cellPos = { 1, 1 };
+        }
+        int x = cellPos.x;
+        int y = cellPos.y;
+        DrawRectangle(m_pos.x + (x - 1) * cellWidth, m_pos.y + (y - 1) * cellHeight, cellWidth * 3, cellHeight * 3, ORANGE);
+        DrawRectangle(m_pos.x + x * cellWidth, m_pos.y + y * cellHeight, cellWidth, cellHeight, RED);
+
+        for (int i = 0; i < gridWidth; i++) {
+            for (int n = 0; n < gridHeight; n++) {
+                DrawRectangleLines(m_pos.x + i * cellWidth, m_pos.y + n * cellHeight, cellWidth, cellHeight, BLACK);
+            }
+        }
+
+        Array<int> indexes = findNearby(cellPos);
+
+        for (int i = 0; i < positionList.getCount(); i++) {
+            DrawCircle(positionList[i].x, positionList[i].y, 15, GREEN);
+        }
+
+        for (int i = 0; i < indexes.getCount(); i++) {
+            DrawCircle(positionList[indexes[i]].x, positionList[indexes[i]].y, 15, RED);
+        }
+
+        DrawCircle(pos.x, pos.y, 15, BLUE);
+
+        std::string cellID = "Cell ID: " + std::to_string(getCellHash(cellPos));
+        DrawText(cellID.c_str(), 10, 100, 20, RED);
+        DrawText(std::to_string(indexes.getCount()).c_str(), 10, 140, 20, RED);
+
+        std::string valid = isValidPos(GetMousePosition()) ? "true" : "false";
+        DrawText(valid.c_str(), 10, 160, 20, RED);
+
+
     }
 };
 
@@ -109,7 +197,7 @@ int main(int argc, char* argv[])
 
     srand(time(NULL));
 
-    SpatialHashGrid grid({ 0, 0 }, screenWidth, screenHeight, 16, 8);
+    SpatialHashGrid grid({ 0, 0 }, screenWidth, screenHeight+20, 16, 8);
 
     // create some critters 
     ObjectPool<Critter> critterPool(50);
@@ -202,6 +290,18 @@ int main(int argc, char* argv[])
                 critterPool.unloadObject(i);
             }
         }
+
+        Array<Vector2> boop;
+
+        for (int i = 0; i < critterPool.getActive(); i++) {
+            if (grid.isValidPos(critterPool[i].GetPosition())) {
+                boop.append(critterPool[i].GetPosition());
+            }
+        }
+
+        grid.insertPositions(boop);
+        grid.sortByCellHash();
+        grid.generateLookup();
                 
         // check for critter-on-critter collisions
         for (int i = 0; i < critterPool.getActive(); i++) {
@@ -262,6 +362,8 @@ int main(int argc, char* argv[])
         for (int i = 0; i < critterPool.getActive(); i++) {
             critterPool[i].Draw();
         }
+
+        
         
         DrawFPS(10, 10);
         std::string debug = "Critters total: " + std::to_string(critterPool.getTotal()) + "\nCritters alive: " + std::to_string(critterPool.getActive()) + "\nCritters dead: " + std::to_string(critterPool.getInactive());

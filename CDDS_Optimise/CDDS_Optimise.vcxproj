@@ -132,13 +132,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CollisionObject.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="TextureMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Array.h" />
-    <ClInclude Include="CollisionObject.h" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="Critter.h" />
     <ClInclude Include="Destroyer.h" />
     <ClInclude Include="ObjectPool.h" />

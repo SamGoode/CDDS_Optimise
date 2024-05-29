@@ -2,7 +2,7 @@
 #include "raylib.h"
 #include "TextureMap.h"
 
-class CollisionObject {
+class GameObject {
 protected:
 	Vector2 m_position;
 	Vector2 m_velocity;
@@ -14,11 +14,11 @@ protected:
 	bool m_isDirty;		// indicates if we've already processed a collision response for this critter
 
 public:
-	CollisionObject();
+	GameObject();
 
-	CollisionObject(const CollisionObject& copy);
+	GameObject(const GameObject& copy);
 
-	CollisionObject& operator=(const CollisionObject& copy);
+	GameObject& operator=(const GameObject& copy);
 
 	void Init(Vector2 position, Vector2 velocity, float radius, TextureMap* ptr, int m_textureID);
 	void InitVecs(Vector2 position, Vector2 velocity);

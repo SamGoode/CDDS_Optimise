@@ -1,6 +1,6 @@
-#include "CollisionObject.h"
+#include "GameObject.h"
 
-CollisionObject::CollisionObject() {
+GameObject::GameObject() {
 	m_position = Vector2{ 0, 0 };
 	m_velocity = Vector2{ 0, 0 };
 	m_radius = 0;
@@ -9,7 +9,7 @@ CollisionObject::CollisionObject() {
 	m_textureID = 0;
 }
 
-CollisionObject::CollisionObject(const CollisionObject& copy) {
+GameObject::GameObject(const GameObject& copy) {
 	m_position = copy.m_position;
 	m_velocity = copy.m_velocity;
 	m_radius = copy.m_radius;
@@ -18,7 +18,7 @@ CollisionObject::CollisionObject(const CollisionObject& copy) {
 	m_textureID = copy.m_textureID;
 }
 
-CollisionObject& CollisionObject::operator=(const CollisionObject& copy) {
+GameObject& GameObject::operator=(const GameObject& copy) {
 	m_position = copy.m_position;
 	m_velocity = copy.m_velocity;
 	m_radius = copy.m_radius;
@@ -29,7 +29,7 @@ CollisionObject& CollisionObject::operator=(const CollisionObject& copy) {
 	return *this;
 }
 
-void CollisionObject::Init(Vector2 position, Vector2 velocity, float radius, TextureMap* ptr, int textureID) {
+void GameObject::Init(Vector2 position, Vector2 velocity, float radius, TextureMap* ptr, int textureID) {
 	m_position = position;
 	m_velocity = velocity;
 	m_radius = radius;
@@ -38,20 +38,20 @@ void CollisionObject::Init(Vector2 position, Vector2 velocity, float radius, Tex
 	m_textureID = textureID;
 }
 
-void CollisionObject::InitVecs(Vector2 position, Vector2 velocity) {
+void GameObject::InitVecs(Vector2 position, Vector2 velocity) {
 	m_position = position;
 	m_velocity = velocity;
 }
 
-void CollisionObject::Update(float dt) {
+void GameObject::Update(float dt) {
 	m_position.x += m_velocity.x * dt;
 	m_position.y += m_velocity.y * dt;
 
 	m_isDirty = false;
 }
 
-void CollisionObject::Draw() {
+void GameObject::Draw() {
 	DrawTexture((*textureMapPtr)[m_textureID], m_position.x - m_radius, m_position.y - m_radius, WHITE);
-	DrawCircle(m_position.x, m_position.y, 5, BLUE);
-	DrawCircleLines(m_position.x, m_position.y, m_radius, BLACK);
+	//DrawCircle(m_position.x, m_position.y, 5, BLUE);
+	//DrawCircleLines(m_position.x, m_position.y, m_radius, BLACK);
 }
