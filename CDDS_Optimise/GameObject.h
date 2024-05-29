@@ -30,10 +30,10 @@ public:
 	void SetX(float x) { m_position.x = x; }
 	void SetY(float y) { m_position.y = y; }
 
-	Vector2 GetPosition() { return m_position; }
+	const Vector2 GetPosition() const { return m_position; }
 	void SetPosition(Vector2 position) { m_position = position; }
 
-	Vector2 GetVelocity() { return m_velocity; }
+	const Vector2 GetVelocity() const { return m_velocity; }
 	void SetVelocity(Vector2 velocity) { m_velocity = velocity; }
 
 	float GetRadius() { return m_radius; }

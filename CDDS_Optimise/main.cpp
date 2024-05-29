@@ -43,8 +43,7 @@ private:
     int gridHeight;
     float cellWidth;
     float cellHeight;
-    // (particle index, cell index)
-    Array<Vector2> positionList;
+    // (particle ID, cell ID)
     Array<int2> hashList;
     Array<int> lookup;
 
@@ -60,12 +59,11 @@ public:
         cellHeight = (float)(m_size.y / gridHeight);
     }
 
-    void insertPositions(Array<Vector2> positions) {
-        positionList = positions;
-        hashList = Array<int2>(positions.getCount());
+    void insertPositions(const Array<Critter>& critters, Array<int> IDs) {
+        hashList = Array<int2>(IDs.getCount());
 
         for (int i = 0; i < hashList.getCount(); i++) {
-            hashList[i] = { i, getCellHash(getCellPos(positions[i])) };
+            hashList[i] = { IDs[i], getCellHash(getCellPos(critters[IDs[i]].GetPosition())) };
         }
     }
 
@@ -84,7 +82,7 @@ public:
         }
         
         int currentStart = 0;
-        for (unsigned int i = 0; i < (unsigned int)hashList.getCount(); i++) {
+        for (int i = 0; i < hashList.getCount(); i++) {
             if (i == hashList.getCount() - 1) {
                 lookup[hashList[i].y] = currentStart;
                 break;
@@ -100,7 +98,7 @@ public:
     }
 
     Array<int> findNearby(int2 cellPos) {
-        Array<int> positionIndexes;
+        Array<int> IDs;
 
         for (int i = 0; i < 3; i++) {
             for (int n = 0; n < 3; n++) {
@@ -113,12 +111,12 @@ public:
                 int startIndex = lookup[cellHash];
 
                 for (int i = startIndex; i < hashList.getCount() && hashList[i].y == cellHash; i++) {
-                    positionIndexes.append(hashList[startIndex].x);
+                    IDs.append(hashList[startIndex].x);
                 }
             }
         }
 
-        return positionIndexes;
+        return IDs;
     }
 
     bool isValidPos(Vector2 pos) {
@@ -127,7 +125,7 @@ public:
 
     int2 getCellPos(Vector2 pos) {
         Vector2 adjusted = Vector2Subtract(pos, m_pos);
-        int2 cellPos = { (int)(adjusted.x / cellWidth), (int)(adjusted.y / cellHeight) };
+        int2 cellPos = { (int)floor(adjusted.x / cellWidth), (int)floor(adjusted.y / cellHeight) };
         if (cellPos.x < 0) {
             cellPos.x = 0;
         }
@@ -138,8 +136,8 @@ public:
         if (cellPos.y < 0) {
             cellPos.y = 0;
         }
-        else if (cellPos.y >= gridWidth) {
-            cellPos.y = gridWidth - 1;
+        else if (cellPos.y >= gridHeight) {
+            cellPos.y = gridHeight - 1;
         }
 
         return cellPos;
@@ -149,16 +147,15 @@ public:
         return (cellPos.x + cellPos.y * gridWidth);
     }
 
-    void draw() {
+    void draw(const Array<Critter>& critters) {
         sortByCellHash();
         generateLookup();
-        Vector2 pos = GetMousePosition();
-        //Vector2 pos = positionList[0];
+        //Vector2 pos = GetMousePosition();
+        Vector2 pos = critters[0].GetPosition();
 
         int2 cellPos = getCellPos(pos);
-        if (!isValidPos(pos)) {
-            cellPos = { 1, 1 };
-        }
+        Array<int> IDs = findNearby(cellPos);
+
         int x = cellPos.x;
         int y = cellPos.y;
         DrawRectangle(m_pos.x + (x - 1) * cellWidth, m_pos.y + (y - 1) * cellHeight, cellWidth * 3, cellHeight * 3, ORANGE);
@@ -166,27 +163,46 @@ public:
 
         for (int i = 0; i < gridWidth; i++) {
             for (int n = 0; n < gridHeight; n++) {
-                DrawRectangleLines(m_pos.x + i * cellWidth, m_pos.y + n * cellHeight, cellWidth, cellHeight, BLACK);
+                DrawRectangleLines(round(m_pos.x + i * cellWidth), round(m_pos.y + n * cellHeight), cellWidth, cellHeight, BLACK);
             }
         }
 
         DrawRectangleLines(m_pos.x, m_pos.y, m_size.x, m_size.y, BLUE);
 
-        Array<int> indexes = findNearby(cellPos);
+        
 
-        for (int i = 0; i < positionList.getCount(); i++) {
-            DrawCircle(positionList[i].x, positionList[i].y, 15, GREEN);
+        for (int i = 0; i < hashList.getCount(); i++) {
+            bool isNearby = false;
+            for (int n = 0; n < IDs.getCount(); n++) {
+                if (hashList[i].x == IDs[n]) {
+                    isNearby = true;
+                }
+            }
+
+            Vector2 c_pos = critters[hashList[i].x].GetPosition();
+            //DrawCircle(c_pos.x, c_pos.y, 15, GREEN);
+
+            if (hashList[i].x == 0) {
+                DrawCircle(c_pos.x, c_pos.y, 15, BLUE);
+            }
+            else if (isNearby) {
+                DrawCircle(c_pos.x, c_pos.y, 15, RED);
+            }
+            else {
+                DrawCircle(c_pos.x, c_pos.y, 15, GREEN);
+            }
         }
 
-        for (int i = 0; i < indexes.getCount(); i++) {
-            DrawCircle(positionList[indexes[i]].x, positionList[indexes[i]].y, 15, RED);
-        }
+        //for (int i = 0; i < IDs.getCount(); i++) {
+        //    Vector2 c_pos = critters[IDs[i]].GetPosition();
+        //    DrawCircle(c_pos.x, c_pos.y, 15, RED);
+        //}
 
-        DrawCircle(pos.x, pos.y, 15, BLUE);
+        //DrawCircle(pos.x, pos.y, 15, BLUE);
 
         std::string cellID = "Cell ID: " + std::to_string(getCellHash(cellPos));
         DrawText(cellID.c_str(), 10, 100, 20, PURPLE);
-        std::string nearby = "Within bounds: " + std::to_string(indexes.getCount());
+        std::string nearby = "Within bounds: " + std::to_string(IDs.getCount());
         DrawText(nearby.c_str(), 10, 140, 20, PURPLE);
 
         std::string valid = isValidPos(GetMousePosition()) ? "true" : "false";
@@ -196,8 +212,7 @@ public:
 };
 
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     // Initialization
     //--------------------------------------------------------------------------------------
     int screenWidth = 800;
@@ -261,20 +276,20 @@ int main(int argc, char* argv[])
         //update the destroyer
         destroyer.Update(delta);
         // check destroyer against screen bounds
-        if (destroyer.GetX() < 0) {
-            destroyer.SetX(0);
+        if (destroyer.GetX() - destroyer.GetRadius() < 0) {
+            destroyer.SetX(destroyer.GetRadius());
             destroyer.SetVelocity(Vector2{ -destroyer.GetVelocity().x, destroyer.GetVelocity().y });
         }
-        if (destroyer.GetX() > screenWidth) {
-            destroyer.SetX(screenWidth);
+        if (destroyer.GetX() + destroyer.GetRadius() > screenWidth) {
+            destroyer.SetX(screenWidth - destroyer.GetRadius());
             destroyer.SetVelocity(Vector2{ -destroyer.GetVelocity().x, destroyer.GetVelocity().y });
         }
-        if (destroyer.GetY() < 0) {
-            destroyer.SetY(0);
+        if (destroyer.GetY() - destroyer.GetRadius() < 0) {
+            destroyer.SetY(destroyer.GetRadius());
             destroyer.SetVelocity(Vector2{ destroyer.GetVelocity().x, -destroyer.GetVelocity().y });
         }
-        if (destroyer.GetY() > screenHeight) {
-            destroyer.SetY(screenHeight);
+        if (destroyer.GetY() + destroyer.GetRadius() > screenHeight) {
+            destroyer.SetY(screenHeight - destroyer.GetRadius());
             destroyer.SetVelocity(Vector2{ destroyer.GetVelocity().x, -destroyer.GetVelocity().y });
         }
 
@@ -286,20 +301,20 @@ int main(int argc, char* argv[])
             critter.Update(delta);
 
             // check each critter against screen bounds
-            if (critter.GetX() < 0) {
-                critter.SetX(0);
+            if (critter.GetX() - critter.GetRadius() < 0) {
+                critter.SetX(critter.GetRadius());
                 critter.SetVelocity(Vector2{ -critter.GetVelocity().x, critter.GetVelocity().y });
             }
-            if (critter.GetX() > screenWidth) {
-                critter.SetX(screenWidth);
+            if (critter.GetX() + critter.GetRadius() > screenWidth) {
+                critter.SetX(screenWidth - critter.GetRadius());
                 critter.SetVelocity(Vector2{ -critter.GetVelocity().x, critter.GetVelocity().y });
             }
-            if (critter.GetY() < 0) {
-                critter.SetY(0);
+            if (critter.GetY() - critter.GetRadius() < 0) {
+                critter.SetY(critter.GetRadius());
                 critter.SetVelocity(Vector2{ critter.GetVelocity().x, -critter.GetVelocity().y });
             }
-            if (critter.GetY() > screenHeight) {
-                critter.SetY(screenHeight);
+            if (critter.GetY() + critter.GetRadius() > screenHeight) {
+                critter.SetY(screenHeight - critter.GetRadius());
                 critter.SetVelocity(Vector2{ critter.GetVelocity().x, -critter.GetVelocity().y });
             }
 
@@ -311,14 +326,11 @@ int main(int argc, char* argv[])
             }
         }
 
-        Array<Vector2> boop;
+        Array<int> activeIDs(critterPool.getActive());
         for (int i = 0; i < critterPool.getActive(); i++) {
-            Vector2 position = critters[critterPool[i]].GetPosition();
-            if (grid.isValidPos(position)) {
-                boop.append(position);
-            }
+            activeIDs[i] = critterPool[i];
         }
-        grid.insertPositions(boop);
+        grid.insertPositions(critters, activeIDs);
                 
         // check for critter-on-critter collisions
         for (int i = 0; i < critterPool.getActive(); i++) {
@@ -372,7 +384,7 @@ int main(int argc, char* argv[])
 
         ClearBackground(RAYWHITE);
 
-        grid.draw();
+        grid.draw(critters);
 
         // draw the destroyer
         destroyer.Draw();

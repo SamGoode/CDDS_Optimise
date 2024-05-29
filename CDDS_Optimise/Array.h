@@ -65,6 +65,14 @@ public:
         return ptr[index];
     }
 
+    const T& operator[](unsigned int index) const {
+        if (index < 0 || index > count - 1) {
+            throw "array out of bounds";
+        }
+
+        return ptr[index];
+    }
+
     unsigned int getCount() {
         return count;
     }
