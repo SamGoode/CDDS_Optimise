@@ -5,6 +5,7 @@
 #include "Array.h"
 #include "Critter.h"
 #include "int2.h"
+#include "RadixSort.h"
 
 bool compareCellHash(int2 a, int2 b) {
     return a.y < b.y;
@@ -47,7 +48,8 @@ public:
             return;
         }
 
-        std::sort(&hashList[0], &hashList[hashList.getCount() - 1] + 1, compareCellHash);
+        //std::sort(&hashList[0], &hashList[hashList.getCount() - 1] + 1, compareCellHash);
+        hashList = radixSort(hashList, 127);
     }
 
     void generateLookup() {
@@ -70,6 +72,10 @@ public:
             lookup[hashList[i].y] = currentStart;
             currentStart = i + 1;
         }
+    }
+
+    const Array<int2>& getHashList() {
+        return hashList;
     }
 
     Array<int> findNearby(int2 cellPos) {

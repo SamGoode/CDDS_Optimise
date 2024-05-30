@@ -1,5 +1,6 @@
 #pragma once
 #include "Array.h"
+#include "int2.h"
 
 // radix sort is O(d(n + w)) where w is size of digit and d is number of digits
 // for 128 different cell IDs I want to find the sweet spot
@@ -21,18 +22,13 @@ Array<int> radixSort(Array<int> unsorted) {
         }
     }
 
-    int digits = 1;
-    while (1 << (digits * 4) < maxValue) {
-        digits += 1;
-    }
-
-    for (int i = 0; i < digits; i++) {
+    for (int i = 0; (1 << (i * 4)) < maxValue; i++) {
         // contains the range of possible values found in a digit
         Array<int> count(16, 0);
 
         for (int n = 0; n < unsorted.getCount(); n++) {
-            int fourBits = (unsorted[n] >> (i * 4)) & 0x0000000F;
-            count[fourBits] += 1;
+            char halfByte = (unsorted[n] >> (i * 4)) & 0x0000000F;
+            count[halfByte] += 1;
         }
 
         for (int n = 1; n < count.getCount(); n++) {
@@ -41,9 +37,70 @@ Array<int> radixSort(Array<int> unsorted) {
 
         Array<int> sorted(unsorted.getCount());
         for (int n = unsorted.getCount() - 1; n >= 0; n--) {
-            int fourBits = (unsorted[n] >> (i * 4)) & 0x0000000F;
-            sorted[count[fourBits] - 1] = unsorted[n];
-            count[fourBits] -= 1;
+            char halfByte = (unsorted[n] >> (i * 4)) & 0x0000000F;
+            sorted[count[halfByte] - 1] = unsorted[n];
+            count[halfByte] -= 1;
+        }
+
+        unsorted = sorted;
+    }
+
+    return unsorted;
+}
+
+Array<int2> radixSort(Array<int2> unsorted) {
+    int maxValue = 0;
+    for (int i = 0; i < unsorted.getCount(); i++) {
+        if (maxValue < unsorted[i].y) {
+            maxValue = unsorted[i].y;
+        }
+    }
+
+    for (int i = 0; (1 << (i * 4)) < maxValue; i++) {
+        // contains the range of possible values found in a digit
+        Array<int> count(16, 0);
+
+        for (int n = 0; n < unsorted.getCount(); n++) {
+            char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
+            count[halfByte] += 1;
+        }
+
+        for (int n = 1; n < count.getCount(); n++) {
+            count[n] += count[n - 1];
+        }
+
+        Array<int2> sorted(unsorted.getCount());
+        for (int n = unsorted.getCount() - 1; n >= 0; n--) {
+            char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
+            sorted[count[halfByte] - 1] = unsorted[n];
+            count[halfByte] -= 1;
+        }
+
+        unsorted = sorted;
+    }
+
+    return unsorted;
+}
+
+Array<int2> radixSort(Array<int2> unsorted, int maxValue) {
+    for (int i = 0; (1 << (i * 4)) < maxValue; i++) {
+        // contains the range of possible values found in a digit
+        Array<int> count(16, 0);
+
+        for (int n = 0; n < unsorted.getCount(); n++) {
+            char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
+            count[halfByte] += 1;
+        }
+
+        for (int n = 1; n < count.getCount(); n++) {
+            count[n] += count[n - 1];
+        }
+
+        Array<int2> sorted(unsorted.getCount());
+        for (int n = unsorted.getCount() - 1; n >= 0; n--) {
+            char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
+            sorted[count[halfByte] - 1] = unsorted[n];
+            count[halfByte] -= 1;
         }
 
         unsorted = sorted;

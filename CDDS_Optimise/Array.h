@@ -92,6 +92,10 @@ public:
         return count;
     }
 
+    unsigned int getCount() const {
+        return count;
+    }
+
     unsigned int getCapacity() {
         return capacity;
     }
