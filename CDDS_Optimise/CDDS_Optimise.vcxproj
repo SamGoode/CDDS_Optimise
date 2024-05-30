@@ -143,6 +143,7 @@
     <ClInclude Include="Destroyer.h" />
     <ClInclude Include="int2.h" />
     <ClInclude Include="ObjectPool.h" />
+    <ClInclude Include="SpatialHashGrid.h" />
     <ClInclude Include="TextureMap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
