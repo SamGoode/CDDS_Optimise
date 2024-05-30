@@ -31,6 +31,7 @@
 #include "Destroyer.h"
 #include "int2.h"
 #include "SpatialHashGrid.h"
+#include "RadixSort.h"
 
 int main(int argc, char* argv[]) {
     // Initialization
@@ -265,42 +266,16 @@ int main(int argc, char* argv[]) {
             //critters[critterPool[i]].Draw();
         }
 
-        Array<int> unsorted(8);
-        int values[8] = { 5, 13, 2, 11, 5, 4, 11, 3 };
+        // radix sort
+        Array<int> unsorted(10);
+        int values[10] = { 5, 69, 13, 49, 127, 5, 4, 69, 11, 3 };
         for (int i = 0; i < unsorted.getCount(); i++) {
             unsorted[i] = values[i];
         }
+
         DrawText(unsorted.toString().c_str(), 200, 10, 16, BLUE);
-        
-        int maxValue = 0;
-        for (int i = 0; i < unsorted.getCount(); i++) {
-            if (maxValue < unsorted[i]) {
-                maxValue = unsorted[i];
-            }
-        }
-        DrawText(std::to_string(maxValue).c_str(), 150, 10, 16, BLUE);
 
-        // contains the range of positive integers found within the unsorted array
-        Array<int> count(16, 0);
-        for (int i = 0; i < unsorted.getCount(); i++) {
-            count[unsorted[i]] += 1;
-        }
-        DrawText(count.toString().c_str(), 200, 30, 16, BLUE);
-
-        for (int i = 1; i < count.getCount(); i++) {
-            count[i] += count[i - 1];
-        }
-        DrawText(count.toString().c_str(), 200, 50, 16, BLUE);
-
-        Array<int> sorted(unsorted.getCount());
-
-        for (int i = 0; i < unsorted.getCount(); i++) {
-            sorted[count[unsorted[unsorted.getCount() - i - 1]] - 1] = unsorted[unsorted.getCount() - i - 1];
-            count[unsorted[unsorted.getCount() - i - 1]] -= 1;
-        }
-        DrawText(sorted.toString().c_str(), 200, 70, 16, BLUE);
-        
-
+        DrawText(radixSort(unsorted).toString().c_str(), 200, 30, 16, BLUE);
 
         DrawFPS(10, 10);
         std::string debug = "Critters total: " + std::to_string(critterPool.getTotal()) + "\nCritters alive: " + std::to_string(critterPool.getActive()) + "\nCritters dead: " + std::to_string(critterPool.getInactive());
