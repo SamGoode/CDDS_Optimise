@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
     SpatialHashGrid grid({ 0, 0 }, { (float)screenWidth, (float)screenHeight }, 16, 8);
 
     // create some critters 
-    Array<Critter> critters(2);
+    Array<Critter> critters(50);
     ObjectPool critterPool(critters.getCount());
 
     const int MAX_VELOCITY = 80;
@@ -82,19 +82,29 @@ int main(int argc, char* argv[]) {
     Destroyer destroyer = Destroyer(position, velocity, &textureMap);
 
     float timer = 1;
+    bool paused = false;
     
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
+    while (!WindowShouldClose()) {   // Detect window close button or ESC key
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
-
         float delta = GetFrameTime();
 
+        if (IsKeyPressed(KEY_SPACE)) {
+            paused = !paused;
+        }
+
+        if (paused) {
+            if (IsKeyDown(KEY_RIGHT)) {
+                delta = 0.002;
+            }
+            else {
+                delta = 0;
+            }
+        }
+
         //update the destroyer
-        //destroyer.Update(delta);
+        destroyer.Update(delta);
         // check destroyer against screen bounds
         if (destroyer.GetX() - destroyer.GetRadius() < 0) {
             destroyer.SetX(destroyer.GetRadius());
@@ -118,7 +128,7 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < critterPool.getActive(); i++) {
             //int n = critterPool[i];
             Critter& critter = critters[critterPool[i]];
-            //critter.Update(delta);
+            critter.Update(delta);
 
             // check each critter against screen bounds
             if (critter.GetX() - critter.GetRadius() < 0) {
@@ -146,29 +156,36 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        critters[1].SetPosition(GetMousePosition());
 
+        // check for critter-on-critter collisions
+        
+        //spatial hashing collision logic
         Array<int> activeIDs(critterPool.getActive());
         for (int i = 0; i < critterPool.getActive(); i++) {
             activeIDs[i] = critterPool[i];
         }
         grid.insertPositions(critters, activeIDs);
-                
-        // check for critter-on-critter collisions
+        grid.sortByCellHash();
+        grid.generateLookup();
+
         for (int i = 0; i < critterPool.getActive(); i++) {
-            for (int j = 0; j < critterPool.getActive(); j++){
-                Critter& critterA = critters[critterPool[i]];
-                Critter& critterB = critters[critterPool[j]];
-                if (i == j || critterA.IsDirty()) {
-                    continue;// note: the other critter (j) could be dirty - that's OK
+            Critter& critterA = critters[critterPool[i]];
+            if (critterA.IsDirty()) {
+                continue;
+            }
+
+            Array<int> nearbyIDs = grid.findNearby(grid.getCellPos(critterA.GetPosition()));
+            for (int j = 0; j < nearbyIDs.getCount(); j++) {
+                if (critterPool[i] == nearbyIDs[j]) {
+                    continue;
                 }
 
-                // check every critter against every other critter
+                Critter& critterB = critters[nearbyIDs[j]];
                 float dist = Vector2Distance(critterA.GetPosition(), critterB.GetPosition());
                 if (dist < critterA.GetRadius() + critterB.GetRadius()) {
                     // collision!
                     // do math to get critters bouncing
-                    Vector2 normal = Vector2Normalize( Vector2Subtract(critterB.GetPosition(), critterA.GetPosition()));
+                    Vector2 normal = Vector2Normalize(Vector2Subtract(critterB.GetPosition(), critterA.GetPosition()));
 
                     // not even close to real physics, but fine for our needs
                     critterA.SetVelocity(Vector2Scale(normal, -MAX_VELOCITY));
@@ -185,6 +202,38 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
+
+        //original collision logic
+        //for (int i = 0; i < critterPool.getActive(); i++) {
+        //    for (int j = 0; j < critterPool.getActive(); j++){
+        //        Critter& critterA = critters[critterPool[i]];
+        //        Critter& critterB = critters[critterPool[j]];
+        //        if (i == j || critterA.IsDirty()) {
+        //            continue;// note: the other critter (j) could be dirty - that's OK
+        //        }
+
+        //        // check every critter against every other critter
+        //        float dist = Vector2Distance(critterA.GetPosition(), critterB.GetPosition());
+        //        if (dist < critterA.GetRadius() + critterB.GetRadius()) {
+        //            // collision!
+        //            // do math to get critters bouncing
+        //            Vector2 normal = Vector2Normalize( Vector2Subtract(critterB.GetPosition(), critterA.GetPosition()));
+
+        //            // not even close to real physics, but fine for our needs
+        //            critterA.SetVelocity(Vector2Scale(normal, -MAX_VELOCITY));
+        //            // set the critter to *dirty* so we know not to process any more collisions on it
+        //            critterA.SetDirty();
+
+        //            // we still want to check for collisions in the case where 1 critter is dirty - so we need a check 
+        //            // to make sure the other critter is clean before we do the collision response
+        //            if (!critterB.IsDirty()) {
+        //                critterB.SetVelocity(Vector2Scale(normal, MAX_VELOCITY));
+        //                critterB.SetDirty();
+        //            }
+        //            break;
+        //        }
+        //    }
+        //}
 
         timer -= delta;
         if (timer <= 0) {
@@ -206,15 +255,52 @@ int main(int argc, char* argv[]) {
 
         ClearBackground(RAYWHITE);
 
-        grid.draw(critters);
+        //grid.draw(critters);
 
         // draw the destroyer
         destroyer.Draw();
 
         // draw the critters
         for (int i = 0; i < critterPool.getActive(); i++) {
-            critters[critterPool[i]].Draw();
+            //critters[critterPool[i]].Draw();
         }
+
+        Array<int> unsorted(8);
+        int values[8] = { 5, 13, 2, 11, 5, 4, 11, 3 };
+        for (int i = 0; i < unsorted.getCount(); i++) {
+            unsorted[i] = values[i];
+        }
+        DrawText(unsorted.toString().c_str(), 200, 10, 16, BLUE);
+        
+        int maxValue = 0;
+        for (int i = 0; i < unsorted.getCount(); i++) {
+            if (maxValue < unsorted[i]) {
+                maxValue = unsorted[i];
+            }
+        }
+        DrawText(std::to_string(maxValue).c_str(), 150, 10, 16, BLUE);
+
+        // contains the range of positive integers found within the unsorted array
+        Array<int> count(16, 0);
+        for (int i = 0; i < unsorted.getCount(); i++) {
+            count[unsorted[i]] += 1;
+        }
+        DrawText(count.toString().c_str(), 200, 30, 16, BLUE);
+
+        for (int i = 1; i < count.getCount(); i++) {
+            count[i] += count[i - 1];
+        }
+        DrawText(count.toString().c_str(), 200, 50, 16, BLUE);
+
+        Array<int> sorted(unsorted.getCount());
+
+        for (int i = 0; i < unsorted.getCount(); i++) {
+            sorted[count[unsorted[unsorted.getCount() - i - 1]] - 1] = unsorted[unsorted.getCount() - i - 1];
+            count[unsorted[unsorted.getCount() - i - 1]] -= 1;
+        }
+        DrawText(sorted.toString().c_str(), 200, 70, 16, BLUE);
+        
+
 
         DrawFPS(10, 10);
         std::string debug = "Critters total: " + std::to_string(critterPool.getTotal()) + "\nCritters alive: " + std::to_string(critterPool.getActive()) + "\nCritters dead: " + std::to_string(critterPool.getInactive());

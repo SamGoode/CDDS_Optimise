@@ -16,7 +16,6 @@ public:
 
     Array(unsigned int initCount) {
         count = initCount;
-        
         capacity = 1;
         for (unsigned int i = 0; i < 32; i++) {
             if ((capacity << i) >= initCount) {
@@ -29,6 +28,22 @@ public:
         }
 
         ptr = new T[capacity];
+    }
+
+    Array(unsigned int initCount, T defaultValue) {
+        count = initCount;
+        capacity = 1;
+        for (unsigned int i = 0; i < 32; i++) {
+            if ((capacity << i) >= initCount) {
+                capacity <<= i;
+                break;
+            }
+        }
+        if (count == 0) {
+            capacity = 0;
+        }
+
+        ptr = new T[capacity]{ defaultValue };
     }
 
     Array(const Array& copy) {
@@ -79,6 +94,20 @@ public:
 
     unsigned int getCapacity() {
         return capacity;
+    }
+
+    // only works if type is valid to_string parameter
+    std::string toString() {
+        std::string output = "[";
+        for (int i = 0; i < count; i++) {
+            output += std::to_string(ptr[i]);
+            if (i == count - 1) {
+                output += "]";
+                continue;
+            }
+            output += ",";
+        }
+        return output;
     }
 
     void resize() {

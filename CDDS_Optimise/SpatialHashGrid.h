@@ -123,8 +123,6 @@ public:
     }
 
     void draw(const Array<Critter>& critters) {
-        sortByCellHash();
-        generateLookup();
         //Vector2 pos = GetMousePosition();
         Vector2 pos = critters[0].GetPosition();
 
@@ -153,12 +151,8 @@ public:
             }
 
             Vector2 c_pos = critters[hashList[i].x].GetPosition();
-            //DrawCircle(c_pos.x, c_pos.y, 15, GREEN);
 
-            if (hashList[i].x == 0) {
-                DrawCircle(c_pos.x, c_pos.y, 15, BLUE);
-            }
-            else if (isNearby) {
+            if (isNearby) {
                 DrawCircle(c_pos.x, c_pos.y, 15, RED);
             }
             else {
@@ -166,22 +160,21 @@ public:
             }
         }
 
-        //for (int i = 0; i < IDs.getCount(); i++) {
-        //    Vector2 c_pos = critters[IDs[i]].GetPosition();
-        //    DrawCircle(c_pos.x, c_pos.y, 15, RED);
-        //}
-
-        //DrawCircle(pos.x, pos.y, 15, BLUE);
+        DrawCircle(pos.x, pos.y, 15, BLUE);
 
         std::string cellID = "Cell ID: " + std::to_string(getCellHash(cellPos));
         DrawText(cellID.c_str(), 10, 100, 20, PURPLE);
         std::string nearby = "Within bounds: " + std::to_string(IDs.getCount());
         DrawText(nearby.c_str(), 10, 140, 20, PURPLE);
-        std::string IDsText = "IDs: ";
+        std::string IDsText = "IDs: [";
         for (int i = 0; i < IDs.getCount(); i++) {
             IDsText += std::to_string(IDs[i]);
+            if (i != IDs.getCount() - 1) {
+                IDsText += ",";
+            }
         }
-        DrawText(IDsText.c_str(), 400, 140, 20, PURPLE);
+        IDsText += "]";
+        DrawText(IDsText.c_str(), 200, 20, 20, PURPLE);
 
         std::string valid = isValidPos(GetMousePosition()) ? "true" : "false";
         valid = "Valid location: " + valid;
