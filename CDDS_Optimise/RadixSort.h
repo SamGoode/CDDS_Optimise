@@ -111,28 +111,22 @@ Array<int2> radixSort(Array<int2> unsorted, int maxValue) {
 
 
 // count sort
-//Array<int> unsorted(8);
-//int values[8] = { 5, 13, 2, 11, 5, 4, 11, 3 };
-//for (int i = 0; i < unsorted.getCount(); i++) {
-//    unsorted[i] = values[i];
-//}
-//DrawText(unsorted.toString().c_str(), 200, 10, 16, BLUE);
+Array<int> countSort(Array<int> unsorted) {
+    // contains the range of possible values found in unsorted array
+    Array<int> count(16, 0);
+    for (int i = 0; i < unsorted.getCount(); i++) {
+        count[unsorted[i]] += 1;
+    }
 
-//// contains the range of possible values found in unsorted array
-//Array<int> count(16, 0);
-//for (int i = 0; i < unsorted.getCount(); i++) {
-//    count[unsorted[i]] += 1;
-//}
-//DrawText(count.toString().c_str(), 200, 30, 16, BLUE);
+    for (int i = 1; i < count.getCount(); i++) {
+        count[i] += count[i - 1];
+    }
 
-//for (int i = 1; i < count.getCount(); i++) {
-//    count[i] += count[i - 1];
-//}
-//DrawText(count.toString().c_str(), 200, 50, 16, BLUE);
+    Array<int> sorted(unsorted.getCount());
+    for (int i = unsorted.getCount() - 1; i >= 0; i--) {
+        sorted[count[unsorted[i]] - 1] = unsorted[i];
+        count[unsorted[i]] -= 1;
+    }
 
-//Array<int> sorted(unsorted.getCount());
-//for (int i = unsorted.getCount() - 1; i >= 0; i--) {
-//    sorted[count[unsorted[i]] - 1] = unsorted[i];
-//    count[unsorted[i]] -= 1;
-//}
-//DrawText(sorted.toString().c_str(), 200, 70, 16, BLUE);
+    return sorted;
+}

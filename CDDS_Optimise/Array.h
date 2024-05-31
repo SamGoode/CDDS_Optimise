@@ -46,6 +46,16 @@ public:
         ptr = new T[capacity]{ defaultValue };
     }
 
+    Array(unsigned int initCount, unsigned int initCapacity, T defaultValue) {
+        if (initCount > initCapacity) {
+            throw "Initial count exceeds initial capacity";
+        }
+
+        count = initCount;
+        capacity = initCapacity;
+        ptr = new T[capacity]{ defaultValue };
+    }
+
     Array(const Array& copy) {
         count = copy.count;
         capacity = copy.capacity;
@@ -100,6 +110,17 @@ public:
         return capacity;
     }
 
+    void setCapacity(unsigned int newCapacity) {
+        T* oldPtr = ptr;
+
+        capacity = newCapacity;
+        ptr = new T[capacity];
+        for (unsigned int i = 0; i < count; i++) {
+            ptr[i] = oldPtr[i];
+        }
+        delete[] oldPtr;
+    }
+
     // only works if type is valid to_string parameter
     std::string toString() {
         std::string output = "[";
@@ -131,6 +152,41 @@ public:
         }
         count++;
         ptr[count - 1] = newObj;
+    }
+
+    void append(const Array<T>& arr) {
+        int oldCount = count;
+        count += arr.count;
+        
+        if (count > capacity) {
+            capacity = 1;
+            for (unsigned int i = 0; i < 32; i++) {
+                if ((capacity << i) >= count) {
+                    capacity <<= i;
+                    break;
+                }
+            }
+
+            T* oldPtr = ptr;
+            ptr = new T[capacity];
+
+            for (unsigned int i = 0; i < oldCount; i++) {
+                ptr[i] = oldPtr[i];
+            }
+            delete[] oldPtr;
+
+            for (unsigned int i = 0; i < arr.count; i++) {
+                ptr[i + oldCount] = arr.ptr[i];
+            }
+
+            return;
+        }
+
+        for (unsigned int i = 0; i < arr.count; i++) {
+            ptr[i + oldCount] = arr.ptr[i];
+        }
+
+        return;
     }
 
     void remove(unsigned int index) {

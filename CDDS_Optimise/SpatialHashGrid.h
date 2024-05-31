@@ -19,9 +19,12 @@ private:
     int gridHeight;
     float cellWidth;
     float cellHeight;
-    // (particle ID, cell ID)
+    int cellCount;
+    // (particle ID, cell ID/hash)
     Array<int2> hashList;
-    Array<int> lookup;
+    Array<int> startIndices;
+    Array<int> endIndices;
+    Array<bool> dirty;
 
 public:
     SpatialHashGrid() {}
@@ -33,6 +36,7 @@ public:
         gridHeight = _gridHeight;
         cellWidth = (float)(m_size.x / gridWidth);
         cellHeight = (float)(m_size.y / gridHeight);
+        cellCount = gridWidth * gridHeight;
     }
 
     void insertPositions(const Array<Critter>& critters, Array<int> IDs) {
@@ -48,28 +52,35 @@ public:
             return;
         }
 
-        //std::sort(&hashList[0], &hashList[hashList.getCount() - 1] + 1, compareCellHash);
+        //std::sort(&hashList[0], &hashList[hashList.getCount() - 1], compareCellHash);
         hashList = radixSort(hashList, 127);
     }
 
     void generateLookup() {
-        lookup = Array<int>(gridWidth * gridHeight);
-        for (int i = 0; i < lookup.getCount(); i++) {
-            lookup[i] = -1;
-        }
+        startIndices = Array<int>(gridWidth * gridHeight);
+        endIndices = Array<int>(gridWidth * gridHeight);
+        dirty = Array<bool>(gridWidth * gridHeight, false);
 
         int currentStart = 0;
+        int previousCellHash = -1;
         for (int i = 0; i < hashList.getCount(); i++) {
             if (i == hashList.getCount() - 1) {
-                lookup[hashList[i].y] = currentStart;
-                continue;
+                startIndices[hashList[i].y] = currentStart;
+                endIndices[hashList[i].y] = currentStart;
+                break;
             }
 
             if (hashList[i].y == hashList[i + 1].y) {
                 continue;
             }
 
-            lookup[hashList[i].y] = currentStart;
+            startIndices[hashList[i].y] = currentStart;
+
+            if (previousCellHash != -1) {
+                endIndices[previousCellHash] = currentStart - 1;
+            }
+            previousCellHash = hashList[i].y;
+
             currentStart = i + 1;
         }
     }
@@ -78,21 +89,81 @@ public:
         return hashList;
     }
 
+    Array<int> findWithin(int cellHash) {
+        Array<int> IDs(0, hashList.getCapacity(), -1);
+        int startIndex = startIndices[cellHash];
+
+        for (int i = startIndex; i < hashList.getCount() && hashList[i].y == cellHash; i++) {
+            IDs.append(hashList[i].x);
+        }
+
+        return IDs;
+    }
+
+    void setCellDirty(int cellHash) {
+        dirty[cellHash] = true;
+    }
+
+    bool isCellDirty(int cellHash) {
+        return dirty[cellHash];
+    }
+
+    const Array<int>& getStartIndices() {
+        return startIndices;
+    }
+
+    const Array<int>& getEndIndices() {
+        return endIndices;
+    }
+
+    Array<int> getNearbyHashes(int cellHash) {
+        Array<int> hashes(0, 16, -1);
+
+        int offsets[9] = { 
+            -1 - gridWidth, -gridWidth, 1 - gridWidth,
+            -1, 0, 1,
+            -1 + gridWidth, gridWidth, 1 + gridWidth
+        };
+
+        for (int i = 0; i < hashes.getCount(); i++) {
+            if (cellHash + offsets[i] < 0 || cellHash + offsets[i] >= cellCount) {
+                continue;
+            }
+            if (isCellDirty(cellHash + offsets[i])) {
+                continue;
+            }
+            hashes.append(cellHash + offsets[i]);
+        }
+
+        return hashes;
+    }
+
+    Array<int> findNearby(int cellHash) {
+        Array<int> IDs(0, hashList.getCapacity(), -1);
+        Array<int> nearbyHashes = getNearbyHashes(cellHash);
+
+        for (int i = 0; i < nearbyHashes.getCount(); i++) {
+           IDs.append(findWithin(nearbyHashes[i]));
+        }
+
+        return IDs;
+    }
+
     Array<int> findNearby(int2 cellPos) {
-        Array<int> IDs;
+        Array<int> IDs(0, hashList.getCapacity(), -1);
 
         for (int i = 0; i < 3; i++) {
-            for (int n = 0; n < 3; n++) {
-                int2 queryPos = { cellPos.x + i - 1, cellPos.y + n - 1 };
+            for (int j = 0; j < 3; j++) {
+                int2 queryPos = { cellPos.x + i - 1, cellPos.y + j - 1 };
                 if (queryPos.x < 0 || queryPos.x >= gridWidth || queryPos.y < 0 || queryPos.y >= gridHeight) {
                     continue;
                 }
 
                 int cellHash = getCellHash(queryPos);
-                int startIndex = lookup[cellHash];
+                int startIndex = startIndices[cellHash];
 
-                for (int i = startIndex; i < hashList.getCount() && hashList[i].y == cellHash; i++) {
-                    IDs.append(hashList[i].x);
+                for (int n = startIndex; n < hashList.getCount() && hashList[n].y == cellHash; n++) {
+                    IDs.append(hashList[n].x);
                 }
             }
         }
