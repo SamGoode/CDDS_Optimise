@@ -215,7 +215,7 @@ int main(int argc, char* argv[]) {
                             critterB.SetVelocity(Vector2Scale(normal, MAX_VELOCITY));
                             critterB.SetDirty();
                         }
-                        continue;
+                        break;
                     }
                 }
             }
