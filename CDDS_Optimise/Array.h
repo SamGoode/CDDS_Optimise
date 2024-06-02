@@ -84,26 +84,6 @@ public:
         delete[] ptr;
     }
 
-    void init(unsigned int initCount) {
-        delete[] ptr;
-        count = initCount;
-
-        if (count == 0) {
-            capacity = 0;
-        }
-        else {
-            capacity = 1;
-            for (unsigned int i = 0; i < 32; i++) {
-                if ((capacity << i) >= initCount) {
-                    capacity <<= i;
-                    break;
-                }
-            }
-        }
-
-        ptr = new T[capacity];
-    }
-
     Array& operator=(const Array& copy) {
         delete[] ptr;
 
@@ -205,40 +185,40 @@ public:
         ptr[count - 1] = newObj;
     }
 
-    void append(const Array<T>& arr) {
-        int oldCount = count;
-        count += arr.count;
-        
-        if (count > capacity) {
-            capacity = 1;
-            for (unsigned int i = 0; i < 32; i++) {
-                if ((capacity << i) >= count) {
-                    capacity <<= i;
-                    break;
-                }
-            }
+    //void append(const Array<T>& arr) {
+    //    int oldCount = count;
+    //    count += arr.count;
+    //    
+    //    if (count > capacity) {
+    //        capacity = 1;
+    //        for (unsigned int i = 0; i < 32; i++) {
+    //            if ((capacity << i) >= count) {
+    //                capacity <<= i;
+    //                break;
+    //            }
+    //        }
 
-            T* oldPtr = ptr;
-            ptr = new T[capacity];
+    //        T* oldPtr = ptr;
+    //        ptr = new T[capacity];
 
-            for (unsigned int i = 0; i < oldCount; i++) {
-                ptr[i] = oldPtr[i];
-            }
-            delete[] oldPtr;
+    //        for (unsigned int i = 0; i < oldCount; i++) {
+    //            ptr[i] = oldPtr[i];
+    //        }
+    //        delete[] oldPtr;
 
-            for (unsigned int i = 0; i < arr.count; i++) {
-                ptr[i + oldCount] = arr.ptr[i];
-            }
+    //        for (unsigned int i = 0; i < arr.count; i++) {
+    //            ptr[i + oldCount] = arr.ptr[i];
+    //        }
 
-            return;
-        }
+    //        return;
+    //    }
 
-        for (unsigned int i = 0; i < arr.count; i++) {
-            ptr[i + oldCount] = arr.ptr[i];
-        }
+    //    for (unsigned int i = 0; i < arr.count; i++) {
+    //        ptr[i + oldCount] = arr.ptr[i];
+    //    }
 
-        return;
-    }
+    //    return;
+    //}
 
     void remove(unsigned int index) {
         if (index < 0 || index > count - 1) {

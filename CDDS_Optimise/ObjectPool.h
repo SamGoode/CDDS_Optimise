@@ -25,10 +25,6 @@ public:
         return *this;
     }
 
-    int getTotal() {
-        return Array<T>::getCount();
-    }
-
     int getActive() {
         return activeCount;
     }
@@ -37,7 +33,7 @@ public:
         return Array<T>::getCount() - activeCount;
     }
 
-    int loadObject() {
+    T& loadObject() {
         if (activeCount + 1 > Array<T>::getCount()) {
             throw "no more objects to load";
         }

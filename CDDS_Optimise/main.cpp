@@ -24,12 +24,11 @@
 #include <random>
 #include <time.h>
 #include <string>
-#include "TextureMap.h"
-#include "ObjectPool.h"
 #include "Array.h"
+#include "ObjectPool.h"
+#include "TextureMap.h"
 #include "Critter.h"
 #include "Destroyer.h"
-#include "int2.h"
 #include "SpatialHashGrid.h"
 
 int main(int argc, char* argv[]) {
@@ -54,7 +53,7 @@ int main(int argc, char* argv[]) {
     SpatialHashGrid grid({ 0, 0 }, { (float)screenWidth, (float)screenHeight }, 16, 8);
 
     // create some critters 
-    Array<Critter> critters(50);
+    Array<Critter> critters(100);
     // object pool stores critter IDs instead of actuall critter objects
     ObjectPool<int> critterPool(critters.getCount());
     for (int i = 0; i < critterPool.getCount(); i++) {
@@ -165,7 +164,6 @@ int main(int argc, char* argv[]) {
         grid.generateHashList(critters, activeIDs);
         grid.sortByCellHash();
         grid.generateLookup();
-
 
         // spatial hashing collision logic
         const Array<int2>& hashList = grid.getHashList();
