@@ -54,8 +54,12 @@ int main(int argc, char* argv[]) {
     SpatialHashGrid grid({ 0, 0 }, { (float)screenWidth, (float)screenHeight }, 16, 8);
 
     // create some critters 
-    Array<Critter> critters(200);
-    ObjectPool critterPool(critters.getCount());
+    Array<Critter> critters(50);
+    // object pool stores critter IDs instead of actuall critter objects
+    ObjectPool<int> critterPool(critters.getCount());
+    for (int i = 0; i < critterPool.getCount(); i++) {
+        critterPool[i] = i;
+    }
 
     const int MAX_VELOCITY = 80;
 

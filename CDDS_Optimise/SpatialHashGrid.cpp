@@ -1,4 +1,5 @@
 #include "SpatialHashGrid.h"
+#include <string>
 //#include <algorithm>
 #include "RadixSort.h"
 

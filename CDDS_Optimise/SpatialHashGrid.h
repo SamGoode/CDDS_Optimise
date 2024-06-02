@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 #include "raymath.h"
 #include "Array.h"
 #include "Critter.h"

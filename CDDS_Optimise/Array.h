@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 template <typename T>
 class Array {
@@ -10,21 +11,23 @@ private:
 public:
     Array() {
         count = 0;
-        capacity = 1;
-        ptr = new T[capacity];
+        capacity = 0;
+        ptr = nullptr;
     }
 
     Array(unsigned int initCount) {
         count = initCount;
-        capacity = 1;
-        for (unsigned int i = 0; i < 32; i++) {
-            if ((capacity << i) >= initCount) {
-                capacity <<= i;
-                break;
-            }
-        }
         if (count == 0) {
             capacity = 0;
+        }
+        else {
+            capacity = 1;
+            for (unsigned int i = 0; i < 32; i++) {
+                if ((capacity << i) >= initCount) {
+                    capacity <<= i;
+                    break;
+                }
+            }
         }
 
         ptr = new T[capacity];
@@ -42,15 +45,17 @@ public:
 
     Array(unsigned int initCount, T defaultValue) {
         count = initCount;
-        capacity = 1;
-        for (unsigned int i = 0; i < 32; i++) {
-            if ((capacity << i) >= initCount) {
-                capacity <<= i;
-                break;
-            }
-        }
         if (count == 0) {
             capacity = 0;
+        }
+        else {
+            capacity = 1;
+            for (unsigned int i = 0; i < 32; i++) {
+                if ((capacity << i) >= initCount) {
+                    capacity <<= i;
+                    break;
+                }
+            }
         }
 
         ptr = new T[capacity]{ defaultValue };
@@ -79,6 +84,26 @@ public:
         delete[] ptr;
     }
 
+    void init(unsigned int initCount) {
+        delete[] ptr;
+        count = initCount;
+
+        if (count == 0) {
+            capacity = 0;
+        }
+        else {
+            capacity = 1;
+            for (unsigned int i = 0; i < 32; i++) {
+                if ((capacity << i) >= initCount) {
+                    capacity <<= i;
+                    break;
+                }
+            }
+        }
+
+        ptr = new T[capacity];
+    }
+
     Array& operator=(const Array& copy) {
         delete[] ptr;
 
@@ -102,6 +127,7 @@ public:
 
         return *this;
     }
+
 
     T& operator[](unsigned int index) {
         if (index < 0 || index > count - 1) {
@@ -158,6 +184,10 @@ public:
 
     void resize() {
         T* oldPtr = ptr;
+
+        if (capacity == 0) {
+            capacity = 1;
+        }
 
         capacity <<= 1;
         ptr = new T[capacity];

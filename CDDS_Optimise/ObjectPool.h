@@ -2,46 +2,31 @@
 #include "Array.h"
 
 // modified ObjectPool so it no longer stores the actual Objects
-class ObjectPool {
+template <typename T>
+class ObjectPool : public Array<T> {
 private:
-    int totalCount;
     int activeCount;
-    // the array stores the index of each object within the original array
-    Array<int> objects;
 
 public:
     ObjectPool() {}
 
-    ObjectPool(int initCount) {
-        totalCount = initCount;
+    ObjectPool(unsigned int initCount) : Array<T>(initCount) {
         activeCount = initCount;
-        objects = Array<int>(initCount);
-
-        for (int i = 0; i < objects.getCount(); i++) {
-            objects[i] = i;
-        }
     }
 
-    ObjectPool(const ObjectPool& copy) {
-        totalCount = copy.totalCount;
+    ObjectPool(const ObjectPool& copy) : Array<T>(copy) {
         activeCount = copy.activeCount;
-        objects = copy.objects;
     }
 
     ObjectPool& operator=(const ObjectPool& copy) {
-        totalCount = copy.totalCount;
+        Array<T>::operator=(copy);
         activeCount = copy.activeCount;
-        objects = copy.objects;
 
         return *this;
     }
 
-    int operator[](int index) {
-        return objects[index];
-    }
-
     int getTotal() {
-        return totalCount;
+        return Array<T>::getCount();
     }
 
     int getActive() {
@@ -49,17 +34,16 @@ public:
     }
 
     int getInactive() {
-        return totalCount - activeCount;
+        return Array<T>::getCount() - activeCount;
     }
 
     int loadObject() {
-        if (activeCount + 1 > totalCount) {
+        if (activeCount + 1 > Array<T>::getCount()) {
             throw "no more objects to load";
         }
 
         activeCount++;
-
-        return objects[activeCount - 1];
+        return Array<T>::operator[](activeCount - 1);
     }
 
     void unloadObject(int index) {
@@ -67,9 +51,9 @@ public:
             throw "object is not active";
         }
 
-        int temp = objects[index];
-        objects[index] = objects[activeCount - 1];
-        objects[activeCount - 1] = temp;
         activeCount--;
+        int temp = Array<T>::operator[](index);
+        Array<T>::operator[](index) = Array<T>::operator[](activeCount);
+        Array<T>::operator[](activeCount) = temp;
     }
 };
