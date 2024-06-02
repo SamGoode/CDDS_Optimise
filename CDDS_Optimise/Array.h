@@ -20,13 +20,13 @@ public:
         if (count == 0) {
             capacity = 0;
         }
+        else if (count > 0x80000000) {
+            throw "count exceeds max capacity";
+        }
         else {
             capacity = 1;
-            for (unsigned int i = 0; i < 32; i++) {
-                if ((capacity << i) >= initCount) {
-                    capacity <<= i;
-                    break;
-                }
+            while (capacity < count) {
+                capacity <<= 1;
             }
         }
 
@@ -45,16 +45,16 @@ public:
 
     Array(unsigned int initCount, T defaultValue) {
         count = initCount;
-        if (count == 0) {
+        if (count > 0x80000000) {
+            throw "count exceeds max capacity";
+        }
+        else if (count == 0) {
             capacity = 0;
         }
         else {
             capacity = 1;
-            for (unsigned int i = 0; i < 32; i++) {
-                if ((capacity << i) >= initCount) {
-                    capacity <<= i;
-                    break;
-                }
+            while (capacity < count) {
+                capacity <<= 1;
             }
         }
 
@@ -234,5 +234,15 @@ public:
 
     void resetCount() {
         count = 0;
+    }
+
+    void clear() {
+        delete[] ptr;
+        ptr = new T[capacity];
+    }
+
+    void clear(T defaultValue) {
+        delete[] ptr;
+        ptr = new T[capacity]{ defaultValue };
     }
 };

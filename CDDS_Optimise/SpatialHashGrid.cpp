@@ -22,6 +22,12 @@ SpatialHashGrid::SpatialHashGrid(Vector2 _pos, Vector2 _size, int _gridWidth, in
         posOffsets[i] = { (i % 3) - 1, (i / 3) - 1 };
         hashOffsets[i] = { ((i % 3) - 1) + ((i / 3) - 1) * gridWidth };
     }
+
+    hashList = Array<int2>(0);
+    startIndices = Array<int>(cellCount);
+    endIndices = Array<int>(cellCount);
+    dirty = Array<bool>(cellCount);
+    tempIDs = Array<int>(0);
 }
 
 const Array<int2>& SpatialHashGrid::getHashList() {
@@ -100,9 +106,9 @@ void SpatialHashGrid::sortByCellHash() {
 }
 
 void SpatialHashGrid::generateLookup() {
-    startIndices = Array<int>(cellCount);
-    endIndices = Array<int>(cellCount);
-    dirty = Array<bool>(cellCount, false);
+    startIndices.clear(-1);
+    endIndices.clear(-1);
+    dirty.clear(false);
 
     int currentStart = 0;
     int previousCellHash = -1;

@@ -11,7 +11,7 @@ protected:
 	TextureMap* textureMapPtr;
 	int m_textureID;
 
-	bool m_isDirty;		// indicates if we've already processed a collision response for this critter
+	bool m_isDirty;		// indicates if we've already processed a collision response for this gameObject
 
 public:
 	GameObject();
