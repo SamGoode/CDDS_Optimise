@@ -24,11 +24,11 @@ Array<int> radixSort(Array<int> unsorted) {
 
     for (int i = 0; (1 << (i * 4)) < maxValue; i++) {
         // contains the range of possible values found in a digit
-        Array<int> count(16, 0);
+        Array<int> count(16, 16, 0);
 
         for (int n = 0; n < unsorted.getCount(); n++) {
             char halfByte = (unsorted[n] >> (i * 4)) & 0x0000000F;
-            count[halfByte] += 1;
+            count[halfByte]++;
         }
 
         for (int n = 1; n < count.getCount(); n++) {
@@ -39,7 +39,7 @@ Array<int> radixSort(Array<int> unsorted) {
         for (int n = unsorted.getCount() - 1; n >= 0; n--) {
             char halfByte = (unsorted[n] >> (i * 4)) & 0x0000000F;
             sorted[count[halfByte] - 1] = unsorted[n];
-            count[halfByte] -= 1;
+            count[halfByte]--;
         }
 
         unsorted = sorted;
@@ -58,11 +58,11 @@ Array<int2> radixSort(Array<int2> unsorted) {
 
     for (int i = 0; (1 << (i * 4)) < maxValue; i++) {
         // contains the range of possible values found in a digit
-        Array<int> count(16, 0);
+        Array<int> count(16, 16, 0);
 
         for (int n = 0; n < unsorted.getCount(); n++) {
             char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
-            count[halfByte] += 1;
+            count[halfByte]++;
         }
 
         for (int n = 1; n < count.getCount(); n++) {
@@ -73,7 +73,7 @@ Array<int2> radixSort(Array<int2> unsorted) {
         for (int n = unsorted.getCount() - 1; n >= 0; n--) {
             char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
             sorted[count[halfByte] - 1] = unsorted[n];
-            count[halfByte] -= 1;
+            count[halfByte]--;
         }
 
         unsorted = sorted;
@@ -82,28 +82,29 @@ Array<int2> radixSort(Array<int2> unsorted) {
     return unsorted;
 }
 
-Array<int2> radixSort(Array<int2> unsorted, int maxValue) {
+const Array<int2>& radixSort(Array<int2>& unsorted, int maxValue) {
+    Array<int2> sorted(unsorted.getCount(), unsorted.getCapacity());
+
     for (int i = 0; (1 << (i * 4)) < maxValue; i++) {
         // contains the range of possible values found in a digit
-        Array<int> count(16, 0);
+        Array<int> count(16, 16, 0);
 
         for (int n = 0; n < unsorted.getCount(); n++) {
-            char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
-            count[halfByte] += 1;
+            char halfByte = (char)(unsorted[n].y >> (i * 4)) & 0x0F;
+            count[halfByte]++;
         }
 
         for (int n = 1; n < count.getCount(); n++) {
             count[n] += count[n - 1];
         }
 
-        Array<int2> sorted(unsorted.getCount());
         for (int n = unsorted.getCount() - 1; n >= 0; n--) {
-            char halfByte = (unsorted[n].y >> (i * 4)) & 0x0000000F;
+            char halfByte = (char)(unsorted[n].y >> (i * 4)) & 0x0F;
             sorted[count[halfByte] - 1] = unsorted[n];
-            count[halfByte] -= 1;
+            count[halfByte]--;
         }
 
-        unsorted = sorted;
+        unsorted.quickCopy(sorted);
     }
 
     return unsorted;

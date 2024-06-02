@@ -30,6 +30,16 @@ public:
         ptr = new T[capacity];
     }
 
+    Array(unsigned int initCount, unsigned int initCapacity) {
+        if (initCount > initCapacity) {
+            throw "Initial count exceeds initial capacity";
+        }
+
+        count = initCount;
+        capacity = initCapacity;
+        ptr = new T[capacity];
+    }
+
     Array(unsigned int initCount, T defaultValue) {
         count = initCount;
         capacity = 1;
@@ -75,6 +85,17 @@ public:
         count = copy.count;
         capacity = copy.capacity;
         ptr = new T[capacity];
+        for (unsigned int i = 0; i < count; i++) {
+            ptr[i] = copy.ptr[i];
+        }
+
+        return *this;
+    }
+
+    // viable if copy capacity is the name
+    Array& quickCopy(const Array& copy) {
+        count = copy.count;
+
         for (unsigned int i = 0; i < count; i++) {
             ptr[i] = copy.ptr[i];
         }
@@ -199,5 +220,9 @@ public:
             ptr[i] = ptr[i + 1];
         }
         ptr[count] = T();
+    }
+
+    void resetCount() {
+        count = 0;
     }
 };

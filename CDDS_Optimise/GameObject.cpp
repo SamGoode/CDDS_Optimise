@@ -52,6 +52,8 @@ void GameObject::Update(float dt) {
 
 void GameObject::Draw() {
 	DrawTexture((*textureMapPtr)[m_textureID], m_position.x - m_radius, m_position.y - m_radius, WHITE);
+	
+	//DrawTexturePro((*textureMapPtr)[m_textureID], { 0, 0, m_radius*2, m_radius*2 - 1 }, { m_position.x - m_radius, m_position.y - m_radius, m_radius * 2, m_radius * 2 }, { 0, 0 }, 0, WHITE);
 	//DrawCircle(m_position.x, m_position.y, 5, BLUE);
 	//DrawCircleLines(m_position.x, m_position.y, m_radius, BLACK);
 }

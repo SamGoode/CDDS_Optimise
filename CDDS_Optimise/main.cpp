@@ -84,33 +84,19 @@ int main(int argc, char* argv[]) {
     Destroyer destroyer = Destroyer(position, velocity, &textureMap);
 
     float timer = 1;
-    bool paused = false;
 
-    // sort test
-    //Array<int> unsorted(10);
-    //int values[10] = { 5, 69, 13, 49, 33, 5, 4, 69, 11, 3 };
-    //for (int i = 0; i < unsorted.getCount(); i++) {
-    //    unsorted[i] = rand() / (RAND_MAX / 128);
-    //}
+    //double startTime;
+    //double timePassed;
+    //double sumTime = 0;
+    //double frames = 0;
+    //double averageTime;
     
     // Main game loop
     while (!WindowShouldClose()) {   // Detect window close button or ESC key
         // Update
         //----------------------------------------------------------------------------------
         float delta = GetFrameTime();
-
-        if (IsKeyPressed(KEY_SPACE)) {
-            paused = !paused;
-        }
-
-        if (paused) {
-            if (IsKeyDown(KEY_RIGHT)) {
-                delta = 0.002;
-            }
-            else {
-                delta = 0;
-            }
-        }
+        //frames++
 
         //update the destroyer
         destroyer.Update(delta);
@@ -161,22 +147,27 @@ int main(int argc, char* argv[]) {
             // simple circle-to-circle collision check
             float dist = Vector2Distance(critter.GetPosition(), destroyer.GetPosition());
             if (dist < critter.GetRadius() + destroyer.GetRadius()) {
-                //critterPool.unloadObject(i);
+                critterPool.unloadObject(i);
             }
         }
 
         // check for critter-on-critter collisions
-        
-        //spatial hashing collision logic
+
+        // spatial hashing setup
         Array<int> activeIDs(critterPool.getActive());
         for (int i = 0; i < critterPool.getActive(); i++) {
             activeIDs[i] = critterPool[i];
         }
-        grid.insertPositions(critters, activeIDs);
+        grid.generateHashList(critters, activeIDs);
         grid.sortByCellHash();
         grid.generateLookup();
 
+
+        // spatial hashing collision logic
         const Array<int2>& hashList = grid.getHashList();
+        Array<int> withinIDs(0, activeIDs.getCapacity());
+        Array<int> nearbyIDs(0, activeIDs.getCapacity());
+
         for (int i = 0; i < hashList.getCount(); i++) {
             int currentCellHash = hashList[i].y;
             if (grid.isCellDirty(currentCellHash)) {
@@ -184,16 +175,20 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            Array<int> nearbyIDs = grid.findNearby(currentCellHash);
-            
-            for (int j = 0; j < nearbyIDs.getCount(); j++) {
-                Critter& critterA = critters[nearbyIDs[j]];
+            withinIDs.quickCopy(grid.findWithin(currentCellHash));
+            nearbyIDs.quickCopy(grid.findNearby(currentCellHash));
+
+            grid.setCellDirty(currentCellHash);
+            i = grid.getEndIndices()[currentCellHash];
+
+            for (int j = 0; j < withinIDs.getCount(); j++) {
+                Critter& critterA = critters[withinIDs[j]];
                 if (critterA.IsDirty()) {
                     continue;
                 }
 
                 for (int n = 0; n < nearbyIDs.getCount(); n++) {
-                    if (nearbyIDs[j] == nearbyIDs[n]) {
+                    if (withinIDs[j] == nearbyIDs[n]) {
                         continue;
                     }
 
@@ -219,9 +214,6 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-
-            grid.setCellDirty(currentCellHash);
-            i = grid.getEndIndices()[currentCellHash];
         }
 
         // former spatial hashing collision logic
@@ -313,7 +305,7 @@ int main(int argc, char* argv[]) {
         ClearBackground(RAYWHITE);
 
         //grid.draw(critters);
-
+        
         // draw the destroyer
         destroyer.Draw();
 
@@ -322,13 +314,9 @@ int main(int argc, char* argv[]) {
             critters[critterPool[i]].Draw();
         }
 
-        // sort test
-        //DrawText(unsorted.toString().c_str(), 200, 10, 20, BLUE);
-        //DrawText(radixSort(unsorted).toString().c_str(), 200, 30, 20, BLUE);
-
         DrawFPS(10, 10);
-        std::string debug = "Critters total: " + std::to_string(critterPool.getTotal()) + "\nCritters alive: " + std::to_string(critterPool.getActive()) + "\nCritters dead: " + std::to_string(critterPool.getInactive());
-        DrawText(debug.c_str(), 10, 32, 16, BLUE);
+        //std::string debug = "Critters total: " + std::to_string(critterPool.getTotal()) + "\nCritters alive: " + std::to_string(critterPool.getActive()) + "\nCritters dead: " + std::to_string(critterPool.getInactive());
+        //DrawText(debug.c_str(), 10, 32, 16, BLUE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
